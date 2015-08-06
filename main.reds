@@ -16,8 +16,8 @@ Red/System []
 }
 
 
-#define SDL_INIT_VIDEO   00000020h
-#define SDL_WINDOW_SHOWN 00000004h
+#define SDL-INIT-VIDEO   00000020h
+#define SDL-WINDOW-SHOWN 00000004h
 
 #enum sdl-bool! [
 	SDL_TRUE: 0
@@ -237,38 +237,7 @@ sdl-window!: alias struct! [
 	]
 ]
 
-SCREEN_WIDTH: 640
-SCREEN_HEIGHT: 480
 
-
-
-window: declare sdl-window!
-screen-surface: declare sdl-surface!
-
-either (sdl-init SDL_INIT_VIDEO) < 0 [
-	print "sdl could not be initialized!"	
-] [
-	window: sdl-create-window "Title of window" 100 100 1000 1000 SDL_WINDOW_SHOWN
-	either window = null [
-		print ["Window could not be created! sdl-error: " sdl-get-error]
-	] [
-		;get the window surface
-		screen-surface: sdl-get-window-surface window
-
-		;fill the surface white
-		sdl-fill-rect screen-surface null sdl-map-rgb screen-surface/format FFh FFh FFh
-
-		;update the surface
-		sdl-update-window-surface window
-		
-		;wait two seconds
-		sdl-delay 2000
-
-		sdl-destroy-window window
-
-		sdl-quit
-	]
-]
 
 
 
