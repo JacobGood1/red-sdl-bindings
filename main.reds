@@ -4,6 +4,17 @@ Red/System []
 	Windows  [#define sdl-lib "C:\Users\Ariel\Desktop\RED\SDL2.dll" #define calling cdecl]
 ] 
 
+;elimate cyclic deps notes
+{
+	#define b-struct!  [struct! [b [hi!]]]
+
+	hi!: alias struct! [
+    	a [b-struct!]
+	]
+
+	hey!: alias b-struct!
+}
+
 
 #define SDL_INIT_VIDEO   00000020h
 #define SDL_WINDOW_SHOWN 00000004h
@@ -28,39 +39,38 @@ sdl-rect!: alias struct! [
 ]
 
 sdl-color!: alias struct! [
-	a [integer!] 
-	b [integer!]
-	g [integer!]
-	r [integer!]
+	r [byte!]
+	g [byte!]
+	b [byte!]
+	a [byte!] 
 ]
 
 sdl-palette!: alias struct! [
 	colors 		[sdl-color!]
-	ncolors 	[integer!]
-	refcount 	[integer!]
 	version 	[integer!]
+	refcount 	[integer!]
 ]
 
 sdl-pixel-format!: alias struct! [
-	a-loss 			[integer!]
+	a-loss 			[byte!]
 	a-mask 			[integer!]
-	a-shift 		[integer!]
-	bits-per-pixel 	[integer!]
-	bloss 			[integer!]
+	a-shift 		[byte!]
+	bits-per-pixel 	[byte!]
+	b-loss 			[byte!]
 	b-mask 			[integer!]
-	b-shift 		[integer!]
-	bytes-per-pixel [integer!]
+	b-shift 		[byte!]
+	bytes-per-pixel [byte!]
 	format 			[integer!]
-	gloss 			[integer!]
+	g-loss 			[byte!]
 	g-mask 			[integer!]
-	g-shift 		[integer!]
+	g-shift 		[byte!]
 	next 			[sdl-pixel-format!]
-	padding 		[integer!]
+	padding 		[byte!]
 	pallet 		    [sdl-palette!]
 	ref-count 		[integer!]
-	r-loss 			[integer!]
+	r-loss 			[byte!]
 	r-mask 			[integer!]
-	r-shift 		[sdl-pixel-format!]
+	r-shift 		[byte!]
 ]
 
 sdl-blit-info!: alias struct! [
@@ -116,18 +126,18 @@ sdl-blit-map!: alias struct! [
 ]
 
 sdl-surface!: alias struct! [
-	clip-rect 	[sdl-rect!]
  	flags 		[integer!]
  	format 		[sdl-pixel-format!]
+ 	w 			[integer!]
  	h 			[integer!]
- 	lock-data 	[byte-ptr!]
- 	locked 		[integer!]
- 	map 		[sdl-blit-map!]
  	pitch 		[integer!]
  	pixels 		[byte-ptr!]
- 	ref-count 	[integer!]
  	user-data 	[byte-ptr!]
- 	w 			[integer!]
+ 	locked 		[integer!]
+ 	lock-data 	[byte-ptr!]
+	clip-rect 	[sdl-rect!]
+ 	map 		[sdl-blit-map!]
+ 	ref-count 	[integer!]
 ]
 
 sdl-blit!: alias function! [
@@ -220,6 +230,10 @@ sdl-window!: alias struct! [
 			window [sdl-window!]
 			return: [integer!]
 		]
+		sdl-destroy-window: "SDL_DestroyWindow" [
+			window [sdl-window!]
+		]
+		sdl-quit: "SDL_Quit" []
 	]
 ]
 
@@ -234,7 +248,7 @@ screen-surface: declare sdl-surface!
 either (sdl-init SDL_INIT_VIDEO) < 0 [
 	print "sdl could not be initialized!"	
 ] [
-	window: sdl-create-window "HI THERE I WINZ" 100 100 1000 1000 SDL_WINDOW_SHOWN
+	window: sdl-create-window "Title of window" 100 100 1000 1000 SDL_WINDOW_SHOWN
 	either window = null [
 		print ["Window could not be created! sdl-error: " sdl-get-error]
 	] [
@@ -249,6 +263,10 @@ either (sdl-init SDL_INIT_VIDEO) < 0 [
 		
 		;wait two seconds
 		sdl-delay 2000
+
+		sdl-destroy-window window
+
+		sdl-quit
 	]
 ]
 
