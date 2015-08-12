@@ -18,6 +18,11 @@ Red/System []
 
 #define SDL-INIT-VIDEO   00000020h
 #define SDL-WINDOW-SHOWN 00000004h
+#define SDL-WINDOWPOS-UNDEFINED 1FFF0000h
+
+#define sdl-load-bmp (file) [sdl-load-bmp-rw sdl-rw-from-file file "rb" 1] 
+#define sdl-blit-surface (src srcrect dst dstrec) [sdl-upper-blit src srcrect dst dstrec]
+
 
 #enum sdl-bool! [
 	SDL_TRUE: 0
@@ -189,6 +194,8 @@ sdl-window!: alias struct! [
 	y 				[integer!]
 ] 
 
+
+
 #import [ 
 	sdl-lib calling [
 		sdl-init: "SDL_Init" [
@@ -227,13 +234,33 @@ sdl-window!: alias struct! [
 			return: [integer!]
 		]
 		sdl-update-window-surface: "SDL_UpdateWindowSurface" [
-			window [sdl-window!]
+			window  [sdl-window!]
 			return: [integer!]
 		]
 		sdl-destroy-window: "SDL_DestroyWindow" [
 			window [sdl-window!]
 		]
 		sdl-quit: "SDL_Quit" []
+		sdl-load-bmp-rw: "SDL_LoadBMP_RW" [
+			src      [byte-ptr!] ;sdl-rwops which is a struct
+			free-src [integer!]
+			return:  [sdl-surface!]
+		]
+		sdl-free-surface: "SDL_FreeSurface" [
+			surface [sdl-surface!]
+		]
+		sdl-upper-blit: "SDL_UpperBlit" [ ;do not call this directly call sdl-blit-surface
+			src 	 [sdl-surface!]
+			src-rect [sdl-rect!]
+			dst 	 [sdl-surface!]
+			dst-rect [sdl-rect!]
+			return:  [integer!]
+		]
+		sdl-rw-from-file: "SDL_RWFromFile" [
+			file    [c-string!]
+			mods    [c-string!]
+			return: [byte-ptr!] ;sdl-r-wops
+		]
 	]
 ]
 
@@ -244,5 +271,7 @@ sdl-window!: alias struct! [
 
 
 
+
+;testing area
 
 
