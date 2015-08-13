@@ -1,14 +1,16 @@
 Red/System []
 
 #switch OS [
-	Windows  [#define sdl-lib "C:\Users\Ariel\Desktop\RED\SDL2.dll" #define calling cdecl]
+	;-- just put the SDL2.dll into the same folder as you final binary and
+	;-- you can then omit the absolute path prefix.
+	Windows  [#define sdl-lib "SDL2.dll" #define calling cdecl]
 ] 
 
 #define SDL_INIT_VIDEO          00000020h
 #define SDL_WINDOW_SHOWN        00000004h
 #define SDL_WINDOWPOS_UNDEFINED 1FFF0000h
 
-#define enum! integer! ;might remove this
+;#define enum! integer! ;might remove this
 
 ;sdl events
 #define SDL_FIRSTEVENT 0
@@ -64,8 +66,9 @@ Red/System []
 #define sdl-load-bmp (file) [sdl-load-bmp-rw sdl-rw-from-file file "rb" 1] 
 #define sdl-blit-surface (src srcrect dst dstrec) [sdl-upper-blit src srcrect dst dstrec]
 
+;-- already defined in https://github.com/red/red/blob/master/system/runtime/common.reds
 ;helper fn
-#define null? [null =]
+;#define null? [null =]
 
 #enum sdl-bool! [
 	SDL_TRUE: 0
@@ -237,48 +240,68 @@ sdl-window!: alias struct! [
 	y 				[integer!]
 ] 
 
-sdl-key-symbol!: alias struct! [
-	scan-code [byte!]
-	sym       [integer!]
-	mod       [integer!]
-	unused    [integer!]
-]
-
 sdl-keyboard-event!: alias struct! [
 	type       [integer!]       
 	time-stamp [integer!]
 	window-id  [integer!]
 	state      [byte!]
 	repeat     [byte!]
-	key-sym    [sdl-key-symbol!]
-]
+	padding2   [byte!]
+	padding3   [byte!]
+	scan-code  [integer!]
+	sym        [integer!]
+	mod-low    [byte!]
+	mod-high   [byte!]			;-- these 2 bytes are causing an unalignment which
+	unused     [integer!]		;-- will force the R/S compiler to insert extra bytes
+]								;-- before `unused`, so that field will map to the wrong location.
+								;-- (fortunately, it's unused. ;-))
+								
+;-- The definition of this sdl-event! is wrong, it's a union, not a struct in C code,
+;-- so all the sub-structs are overlapping in memory. Only `type` field is common to all.
+;-- That said, as you reserve the memory storage for this union, we need to get its size
+;-- right. In this case, the full size of the union is given explicitly by the last field.
+;
+;		typedef union SDL_Event
+;		{
+;		    Uint32 type;                    /**< Event type, shared with all events */
+;			...
+;			Uint8 padding[56];
+;		}
 
 sdl-event!: alias struct! [
-	type      [integer!]
-	common    [byte-ptr!]
-	window    [byte-ptr!]
-	key       [sdl-keyboard-event!]
-	edit      [byte-ptr!]
-	text      [byte-ptr!]
-	motion    [byte-ptr!]
-	button    [byte-ptr!]
-	wheel     [byte-ptr!]
-	j-axis    [byte-ptr!]
-	jball     [byte-ptr!]
-	j-hat     [byte-ptr!]
-	j-button  [byte-ptr!] 
-	j-device  [byte-ptr!] 
-	c-axis    [byte-ptr!]
-	c-button  [byte-ptr!] 
-	c-device  [byte-ptr!] 
-	a-device  [byte-ptr!] 
-	quit      [byte-ptr!]
-	user      [byte-ptr!]
-	sys-wm    [byte-ptr!]
-	t-finger  [byte-ptr!]
-	m-gesture [byte-ptr!] 
-	d-gesture [byte-ptr!] 
-	drop      [byte-ptr!]
+	type      [integer!]		;-- 4 bytes
+	pad1	  [integer!]		;-- 4 bytes
+	pad2	  [float!]			;-- 8 bytes
+	pad3	  [float!]			;-- 8 bytes
+	pad4	  [float!]			;-- 8 bytes
+	pad5	  [float!]			;-- 8 bytes
+	pad6	  [float!]			;-- 8 bytes
+	pad7	  [float!]			;-- 8 bytes
+								;-- total: 56 bytes, we're good to go!
+	;common    [byte-ptr!]
+	;window    [byte-ptr!]
+	;key       [sdl-keyboard-event!]
+	;edit      [byte-ptr!]
+	;text      [byte-ptr!]
+	;motion    [byte-ptr!]
+	;button    [byte-ptr!]
+	;wheel     [byte-ptr!]
+	;j-axis    [byte-ptr!]
+	;jball     [byte-ptr!]
+	;j-hat     [byte-ptr!]
+	;j-button  [byte-ptr!] 
+	;j-device  [byte-ptr!] 
+	;c-axis    [byte-ptr!]
+	;c-button  [byte-ptr!] 
+	;c-device  [byte-ptr!] 
+	;a-device  [byte-ptr!] 
+	;quit      [byte-ptr!]
+	;user      [byte-ptr!]
+	;sys-wm    [byte-ptr!]
+	;t-finger  [byte-ptr!]
+	;m-gesture [byte-ptr!] 
+	;d-gesture [byte-ptr!] 
+	;drop      [byte-ptr!]
 ]
 
 
@@ -374,7 +397,7 @@ load-surface: func [path [c-string!] return: [sdl-surface!]] [
 	loaded-surface
 ]
 
-init: func [return: [logic!]] [
+init: func [return: [logic!] /local success] [
 	success: true
 
 	either (sdl-init SDL_INIT_VIDEO) < 0 [
@@ -396,80 +419,96 @@ init: func [return: [logic!]] [
 ]
 
 
-;load the assests
-KEY_PRESS_SURFACE_DEFAULT: load-surface "C:\Users\Ariel\Documents\GitHub\red-sdl-bindings\lazy_foo_examples\assets\press.bmp"  
-KEY_PRESS_SURFACE_UP: load-surface "C:\Users\Ariel\Documents\GitHub\red-sdl-bindings\lazy_foo_examples\assets\up.bmp"
-KEY_PRESS_SURFACE_DOWN: load-surface "C:\Users\Ariel\Documents\GitHub\red-sdl-bindings\lazy_foo_examples\assets\down.bmp"
-KEY_PRESS_SURFACE_LEFT: load-surface "C:\Users\Ariel\Documents\GitHub\red-sdl-bindings\lazy_foo_examples\assets\left.bmp"
-KEY_PRESS_SURFACE_RIGHT: load-surface "C:\Users\Ariel\Documents\GitHub\red-sdl-bindings\lazy_foo_examples\assets\right.bmp"
+;load the assets
+KEY_PRESS_SURFACE_DEFAULT:  load-surface "lazy_foo_examples\assets\press.bmp"  
+KEY_PRESS_SURFACE_UP: 		load-surface "lazy_foo_examples\assets\up.bmp"
+KEY_PRESS_SURFACE_DOWN:		load-surface "lazy_foo_examples\assets\down.bmp"
+KEY_PRESS_SURFACE_LEFT: 	load-surface "lazy_foo_examples\assets\left.bmp"
+KEY_PRESS_SURFACE_RIGHT:	load-surface "lazy_foo_examples\assets\right.bmp"
 
-load-media-test: func [return: [logic!]] [
+load-media-test: func [return: [logic!] /local success] [
 	success: true
 
     case [
-    	null = KEY_PRESS_SURFACE_DEFAULT [print "failed to load default image!" success: false] 
-    	null = KEY_PRESS_SURFACE_UP      [print "failed to load up image!" success: false]
-    	null = KEY_PRESS_SURFACE_DOWN    [print "failed to load down image!" success: false]
-    	null = KEY_PRESS_SURFACE_RIGHT   [print "failed to load right image!" success: false]
-    	null = KEY_PRESS_SURFACE_LEFT    [print "failed to load left image!" success: false]
-    	true                             [print "success"]
+    	null? KEY_PRESS_SURFACE_DEFAULT [print "failed to load default image!" success: false] 
+    	null? KEY_PRESS_SURFACE_UP      [print "failed to load up image!" success: false]
+    	null? KEY_PRESS_SURFACE_DOWN    [print "failed to load down image!" success: false]
+    	null? KEY_PRESS_SURFACE_RIGHT   [print "failed to load right image!" success: false]
+    	null? KEY_PRESS_SURFACE_LEFT    [print "failed to load left image!" success: false]
+    	true                            [print "success"]
     ]
 
 	success
 ]
 
 close: func [] [
+	;-- These lines are just setting pointers to null, they don't free any resource.
+	;-- You need to use SDL_FreeSurface on each one for that.
 	;deallocate surfaces
-	KEY_PRESS_SURFACE_DEFAULT: null
-	KEY_PRESS_SURFACE_UP: null
-	KEY_PRESS_SURFACE_DOWN: null
-	KEY_PRESS_SURFACE_LEFT: null
-	KEY_PRESS_SURFACE_RIGHT: null
+	;KEY_PRESS_SURFACE_DEFAULT: null
+	;KEY_PRESS_SURFACE_UP: null
+	;KEY_PRESS_SURFACE_DOWN: null
+	;KEY_PRESS_SURFACE_LEFT: null
+	;KEY_PRESS_SURFACE_RIGHT: null
+	sdl-free-surface KEY_PRESS_SURFACE_DEFAULT
+	sdl-free-surface KEY_PRESS_SURFACE_UP
+	sdl-free-surface KEY_PRESS_SURFACE_DOWN
+	sdl-free-surface KEY_PRESS_SURFACE_LEFT
+	sdl-free-surface KEY_PRESS_SURFACE_RIGHT
 
 	;destroy window
 	sdl-destroy-window window
-	window: null
+	;window: null					;-- unnecessary
 
 	;quit sdl subsystems
 	sdl-quit
 ]
 
-main: func [] [
+main: func [
+	/local quit-loop event current-surface symbol keyboard
+][
 	quit-loop: false
 	event: declare sdl-event!
 
 	current-surface: KEY_PRESS_SURFACE_DEFAULT
-	symbol: declare integer!
+	
+	;-- This following line is wrong (not sure why the compiler let it pass)
+	;-- `declare` can only be used on struct! and pointer! types.
+	;symbol: declare integer!
+	symbol: 0
 
-	either not init [
-		print "faled to init!\n"
-	] [
-		either not load-media-test [
-			print "media failed!\n"
-		] [
-			while [not quit-loop] [
-				while [not (sdl-poll-event event) = 0] [
-					case [
-						event/type = SDL_QUIT [
-							quit-loop: true
-						]
-						event/type = SDL_KEYDOWN [
-					
-							;this is where I get an error, it works as event/key/key-sym but not as event/key/key-sym/sym
-							; I get an access violation!
-							print event/key/key-sym/sym
-							
-							;symbol/sym
-						]
-						true [] ;default case
-					]
+	;-- I've removed the nested EITHER blocks, the new code is flat
+	;-- making the reading easier (though, it's mostly a matter of personal taste).
+	unless init [print "faled to init!\n" halt]
+	unless load-media-test [print "media failed!\n" halt]
+	
+	forever [
+		while [(sdl-poll-event event) <> 0] [
+			;-- uncomment the following line to examine the memory content of event
+			;-- (just ensure that you compile in debug mode using the -d command-line option)
+			;dump-hex4 as int-ptr! event
+		
+			;-- I replaced the CASE by a SWITCH, makes it less verbose.			
+			switch event/type [
+				SDL_QUIT [
+					close
+					quit 0
 				]
+				SDL_KEYDOWN [
+					;-- SDL_event struct is a union, so you need to map a different
+					;-- struct on it for each event type.
+					keyboard: as sdl-keyboard-event! event
+					probe ["key pressed: " as-byte keyboard/sym " (" keyboard/sym ")"]
+				]
+				default [0]
 			]
 		]
 	]
 	
-
-	close
+	;-- The following code is never reached as the exit point of the program
+	;-- is now in SDL_QUIT event handling.
+	;probe "never reached!!"
+	;close
 ]
 
 main
