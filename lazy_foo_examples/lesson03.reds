@@ -4,7 +4,7 @@ Red/System []
 
 window: declare sdl-window!
 screen-surface: declare sdl-surface!
-hello-world: declare sdl-surface!
+g-x-out: declare sdl-surface!
 
 init: func [return: [logic!]] [
 	success: true
@@ -29,10 +29,10 @@ init: func [return: [logic!]] [
 
 load-media: func [return: [logic!]] [
 	success: true
-	path: "C:\Users\Ariel\Documents\GitHub\red-sdl-bindings\lazy_foo_examples\assets\hello_world.bmp" ;replace this with your own path
+	path: "C:\Users\Ariel\Documents\GitHub\red-sdl-bindings\lazy_foo_examples\assets\x.bmp" ;replace this with your own path
 	;load splash image
-	hello-world: sdl-load-bmp(path) ; macro call
-	if hello-world = null [
+	g-x-out: sdl-load-bmp(path) ; macro call
+	if g-x-out = null [
 		print ["unable to load image! sdl-error: " sdl-get-error]
 		success: false
 	]
@@ -41,8 +41,8 @@ load-media: func [return: [logic!]] [
 
 close: func [] [
 	;deallocate surface
-	sdl-free-surface hello-world
-	hello-world: null
+	sdl-free-surface g-x-out
+	g-x-out: null
 
 	;destroy window
 	sdl-destroy-window window
@@ -53,6 +53,9 @@ close: func [] [
 ]
 
 main: func [] [
+	quit-loop: false
+	event: declare sdl-event!
+
 	either not init [
 		print "failed to init!"
 	] [
@@ -60,16 +63,22 @@ main: func [] [
 		either not load-media [
 			print "failed to load media"
 		] [
+			
+			while [not quit-loop] [
+				while [not (sdl-poll-event event) = 0] [
+					if event/type = SDL_QUIT [
+						quit-loop: true
+					]
+					print "events are working!"
+				]
+				
+				;apply the image
+				sdl-blit-surface(g-x-out null screen-surface null) ;macro call
 
+				;update the surface 
+				sdl-update-window-surface window 
+			]
 
-			;apply the image
-			sdl-blit-surface(hello-world null screen-surface null) ;macro call
-
-			;update the surface 
-			sdl-update-window-surface window
-
-			;wait two seconds
-			sdl-delay 2000
 		]
 	]
 

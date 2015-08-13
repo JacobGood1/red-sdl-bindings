@@ -1,6 +1,6 @@
 Red/System []
 
-#include %../main.reds
+#include %../red-sdl-bindings.reds
 
 SCREEN-WIDTH: 640
 SCREEN-HEIGHT: 480
