@@ -479,14 +479,14 @@ main: func [
 
 	;-- I've removed the nested EITHER blocks, the new code is flat
 	;-- making the reading easier (though, it's mostly a matter of personal taste).
-	unless init [print "faled to init!\n" halt]
-	unless load-media-test [print "media failed!\n" halt]
+	unless init [print ["failed to init!" lf] halt]
+	unless load-media-test [print ["media failed!" lf] halt]
 	
 	forever [
 		while [(sdl-poll-event event) <> 0] [
 			;-- uncomment the following line to examine the memory content of event
 			;-- (just ensure that you compile in debug mode using the -d command-line option)
-			;dump-hex4 as int-ptr! event
+			;dump-hex4 as int-ptr! event\
 		
 			;-- I replaced the CASE by a SWITCH, makes it less verbose.			
 			switch event/type [
