@@ -1,5 +1,7 @@
 Red/System []
 
+#include %../red-sdl-bindings.reds
+
 window: declare sdl-window!
 screen-surface: declare sdl-surface!
 current-surface: declare sdl-surface!
@@ -96,16 +98,16 @@ main: func [
 				SDL_KEYDOWN [
 					keyboard: as sdl-keyboard-event! event
 					switch as-byte keyboard/sym [
-						#"a" [
+						SDLK_a [
 							current-surface: KEY_PRESS_SURFACE_LEFT
 						]
-						#"w" [
+						SDLK_w [
 							current-surface: KEY_PRESS_SURFACE_UP
 						]
-						#"s" [
+						SDLK_s [
 							current-surface: KEY_PRESS_SURFACE_DOWN
 						]
-						#"d" [
+						SDLK_d [
 							current-surface: KEY_PRESS_SURFACE_RIGHT
 						]
 						default [current-surface: KEY_PRESS_SURFACE_DEFAULT]
