@@ -29,7 +29,7 @@ init: func [return: [logic!]] [
 
 load-media: func [return: [logic!]] [
 	success: true
-	path: "C:\Users\Ariel\Documents\GitHub\red-sdl-bindings\lazy_foo_examples\assets\x.bmp" ;replace this with your own path
+	path: "assets\x.bmp" 
 	;load splash image
 	g-x-out: sdl-load-bmp(path) ; macro call
 	if g-x-out = null [
