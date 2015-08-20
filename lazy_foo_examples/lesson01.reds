@@ -10,10 +10,10 @@ SCREEN-HEIGHT: 480
 window: declare sdl-window!
 screen-surface: declare sdl-surface!
 
-either (sdl-init SDL-INIT-VIDEO) < 0 [
+either (sdl-init SDL_INIT_VIDEO) < 0 [
 	print "sdl could not be initialized!"	
 ] [
-	window: sdl-create-window "Title of window" 100 100 SCREEN-WIDTH SCREEN-HEIGHT SDL-WINDOW-SHOWN
+	window: sdl-create-window "Title of window" 100 100 SCREEN-WIDTH SCREEN-HEIGHT SDL_WINDOW_SHOWN
 	either window = null [
 		print ["Window could not be created! sdl-error: " sdl-get-error]
 	] [

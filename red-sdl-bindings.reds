@@ -4,6 +4,8 @@ Red/System []
 	Windows  [#define sdl-lib "SDL2.dll" #define calling cdecl]
 ] 
 
+
+
 #define SDL_INIT_VIDEO          00000020h
 #define SDL_WINDOW_SHOWN        00000004h
 #define SDL_WINDOWPOS_UNDEFINED 1FFF0000h
@@ -16,21 +18,21 @@ Red/System []
 #define SDL_PRESSED 1
 
 #define SDL_QUIT                     00000100h
-#define SDL_APP_TERMINATING          00000101h
-#define SDL_APP_LOWMEMORY            00000102h
-#define SDL_APP_WILLENTERBACKGROUND  00000103h
-#define SDL_APP_DIDENTERBACKGROUND   00000104h
-#define SDL_APP_WILLENTERFOREGROUND  00000105h
-#define SDL_APP_DIDENTERFOREGROUND   00000106h
-#define SDL_WINDOWEVENT              00000200h
-#define SDL_SYSWMEVENT 				 00000201h
-#define SDL_KEYDOWN 				 00000300h
-#define SDL_KEYUP 				     00000301h
-#define SDL_TEXTEDITING 			 00000302h
-#define SDL_TEXTINPUT 			     00000303h
-#define SDL_MOUSEMOTION 			 00000400h
-#define SDL_MOUSEBUTTONDOWN 		 00000401h
-#define SDL_MOUSEBUTTONUP 			 00000402h
+#define SDL_APP_TERMINATING          00000101h        
+#define SDL_APP_LOWMEMORY            00000102h        
+#define SDL_APP_WILLENTERBACKGROUND  00000103h        
+#define SDL_APP_DIDENTERBACKGROUND   00000104h        
+#define SDL_APP_WILLENTERFOREGROUND  00000105h        
+#define SDL_APP_DIDENTERFOREGROUND   00000106h        
+#define SDL_WINDOWEVENT              00000200h        
+#define SDL_SYSWMEVENT 				 00000201h        
+#define SDL_KEYDOWN 				 00000300h        
+#define SDL_KEYUP 				     00000301h        
+#define SDL_TEXTEDITING 			 00000302h        
+#define SDL_TEXTINPUT 			     00000303h        
+#define SDL_MOUSEMOTION 			 00000400h        
+#define SDL_MOUSEBUTTONDOWN 		 00000401h        
+#define SDL_MOUSEBUTTONUP 			 00000402h        
 #define SDL_MOUSEWHEEL 			     00000403h
 #define SDL_JOYAXISMOTION 			 00000600h
 #define SDL_JOYBALLMOTION 			 00000601h
@@ -303,6 +305,10 @@ Red/System []
 #define sdl-load-bmp (file) [sdl-load-bmp-rw sdl-rw-from-file file "rb" 1] 
 #define sdl-blit-surface (src srcrect dst dstrec) [sdl-upper-blit src srcrect dst dstrec]
 
+
+#enum sdl-window-flags! [
+	SDL_WINDOW_RESIZABLE: 00000020h
+]
 
 #enum sdl-bool! [
 	SDL_TRUE: 0
@@ -582,16 +588,121 @@ sdl-event!: alias struct! [
 			return: [byte-ptr!] ;sdl-r-wops
 		]
 		sdl-poll-event: "SDL_PollEvent" [
-			event [sdl-event!]
+			event   [sdl-event!]
 			return: [integer!]
 		]
-
+		sdl-convert-surface: "SDL_ConvertSurface" [
+			source  [sdl-surface!]
+			format  [sdl-pixel-format!]
+			flags   [integer!]
+			return: [sdl-surface!]
+		]
+		sdl-blit-scaled: "SDL_UpperBlitScaled" [
+			src      [sdl-surface!]
+			src-rect [sdl-rect!]
+			dst      [sdl-surface!]
+			dst-rect [sdl-rect!]
+			return:  [integer!]
+		]
 	]
 ]
 
 
+
 ;testing area
 
+#include %directx9-bindings.reds
+
+;direct-3d: directx-create D3D_SDK_VERSION
 
 
+;probe direct-3d
+main: func [return: [integer!] /local event direct-3d keyboard] [
+	width:              800
+	height:             480
+	event:              declare sdl-event!
+	direct-3d:          declare direct3d!
+	direct-3d-device:   declare direct3d-device!	
 
+	if (sdl-init SDL_INIT_VIDEO) < 0 [
+		return 0
+	]
+
+	
+	sdl-create-window "hi" SDL_WINDOWPOS_UNDEFINED SDL_WINDOWPOS_UNDEFINED width height SDL_WINDOW_RESIZABLE
+
+	
+
+	
+	direct-3d: directx-create 		
+
+	if direct-3d = null [
+		return 0
+	]
+	
+
+	init-presentation-parameters
+
+	comment {
+	
+
+	
+	present-parameters/windowed: 1
+
+	present-parameters/swap-effect:               D3DSWAPEFFECT_DISCARD
+	present-parameters/enable-auto-depth-stencil: 1
+	present-parameters/auto-depth-stencil-format: D3DFMT_D16
+	present-parameters/h-device-window:           get-active-window
+	present-parameters/back-buffer-width:         height
+	present-parameters/back-buffer-height:        width
+	present-parameters/back-buffer-format:        D3DFMT_R5G6B5
+	present-parameters/multi-sample-type:         D3DMULTISAMPLE_NONE
+	}
+
+	
+	
+	;direct-3d/create-device D3DADAPTER_DEFAULT D3DDEVTYPE_HAL get-active-window D3DCREATE_SOFTWARE_VERTEXPROCESSING present-parameters direct-3d-device
+
+	
+	set-presentation-parameters-is-windowed               true
+	set-presentation-parameters-swap-effect               D3DSWAPEFFECT_DISCARD
+	set-presentation-parameters-enable-auto-depth-stencil true
+	set-presentation-parameters-auto-depth-stencil-format D3DFMT_D16
+	set-presentation-parameters-h-device-window           get-active-window
+	set-presentation-parameters-back-buffer-width         width
+	set-presentation-parameters-back-buffer-height        height
+	set-presentation-parameters-back-buffer-format        D3DFMT_R5G6B5
+	set-presentation-parameters-multi-sample-type         D3DMULTISAMPLE_NONE 
+	
+	directx-create-device get-active-window D3DADAPTER_DEFAULT D3DDEVTYPE_HAL D3DCREATE_SOFTWARE_VERTEXPROCESSING
+	probe "still twerkin"
+	
+	direct-3d-device: get-direct-3d-device
+	
+
+
+	
+
+	
+	forever [
+		while [(sdl-poll-event event) <> 0] [
+      		switch event/type [
+      			SDL_KEYDOWN [
+      				keyboard: as sdl-keyboard-event! event
+      				if keyboard/sym = SDLK_ESCAPE [
+	      				directx-destroy direct-3d-device direct-3d
+	      				quit 0
+      				]
+      			]
+      			default [0]
+      		]
+
+		]
+	]
+	
+	
+	0
+]
+
+
+main
