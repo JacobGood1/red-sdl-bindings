@@ -323,10 +323,10 @@ Red/System []
 ] 
 
 sdl-rect!: alias struct! [
- 	h 	[integer!]
- 	w 	[integer!]
  	x 	[integer!]
-	y 	[integer!]
+ 	y 	[integer!]
+ 	w 	[integer!]
+	h 	[integer!]
 ]
 
 sdl-color!: alias struct! [
