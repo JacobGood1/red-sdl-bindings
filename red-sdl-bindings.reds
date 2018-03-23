@@ -617,7 +617,7 @@ sdl-event!: alias struct! [
 
 
 ;probe direct-3d
-main: func [return: [integer!] /local event direct-3d keyboard] [
+main: func [return: [integer!] /local event direct-3d keyboard width height direct-3d-device] [
 	width:              800
 	height:             480
 	event:              declare sdl-event!
